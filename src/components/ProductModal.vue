@@ -15,13 +15,13 @@ TypeScript 練習題目 - 商品彈窗組件
 <script setup lang="ts">
 // TODO: 匯入 API 函式
 // 提示：從 @/api/products 匯入 apiCreateProduct, apiEditProduct
-import {} from '@/api/products'
+import { apiCreateProduct, apiEditProduct } from '@/api/products'
 import { useImageUpload } from '@/composable/useImageUpload'
 import { useProductForm } from '@/composable/useProductData'
 
 // TODO: 匯入型別定義
 // 提示：從 @/types/product 匯入 ProductData
-import type {} from '@/types/product'
+import type { ProductData } from '@/types/product'
 import { Modal } from 'bootstrap'
 
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
@@ -29,23 +29,27 @@ import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vu
 // TODO: 定義 Props 介面
 // 提示：ProductModalProps 應該包含 product 屬性，型別是 ProductData
 interface ProductModalProps {
-  // 在這裡定義 props 型別，將 unknown 替換為正確的型別
-  product: unknown
+  product: ProductData
 }
 
 // TODO: 定義 props
 // 提示：使用 defineProps<ProductModalProps>()
-const { product } = defineProps()
+const { product } = defineProps<ProductModalProps>()
 
-const emit = defineEmits(['get-products'])
+
+const emit = defineEmits<{
+  (e: 'get-products'): void
+}>()
 
 // TODO: 為模板引用加上型別註解
 // 提示：使用 useTemplateRef<HTMLElement>()
-const modalRef = useTemplateRef('modalRef')
+const modalRef = useTemplateRef<HTMLElement>('modalRef')
+
 
 // TODO: 為 modal 變數加上型別註解
 // 提示：型別是 Modal | null
-let modal = null
+let modal: Modal | null = null
+
 
 onMounted(() => {
   if (modalRef.value) {
@@ -54,21 +58,16 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (modal) {
-    modal.dispose()
-  }
+  modal?.dispose()
 })
 
-const openModal = () => {
-  if (modal) {
-    modal.show()
-  }
+
+const openModal = (): void => {
+  modal?.show()
 }
 
-const closeModal = () => {
-  if (modal) {
-    modal.hide()
-  }
+const closeModal = (): void => {
+  modal?.hide()
 }
 
 const { form, formTitle, loadProduct } = useProductForm()
@@ -88,7 +87,7 @@ const {
 
 watch(
   () => product,
-  (newProduct) => {
+  (newProduct: ProductData) => {
     if (newProduct.id) {
       loadProduct(newProduct)
       resetImages([newProduct.imageUrl, ...newProduct.imagesUrl])
@@ -100,11 +99,12 @@ watch(
   { immediate: true, deep: true },
 )
 
-const isEditMode = computed(() => Boolean(product.id))
+const isEditMode = computed<boolean>(() => Boolean(product.id))
 
-const isLoading = ref(false)
+const isLoading = ref<boolean>(false)
 
-const saveProduct = async () => {
+
+const saveProduct = async (): Promise<void> => {
   const [imageUrl, ...imagesUrl] = uploadedImages.value
 
   const { id, ...productData } = form.value
@@ -114,21 +114,26 @@ const saveProduct = async () => {
 
   const data = {
     ...productData,
-    imagesUrl: productData.imagesUrl ? productData.imagesUrl : [''],
+    imagesUrl: productData.imagesUrl?.length ? productData.imagesUrl : [''],
   }
 
   isLoading.value = true
 
   try {
     if (isEditMode.value && id) {
-      await apiEditProduct({ data, id })
+      await apiEditProduct({ id, data })
     } else {
       await apiCreateProduct(data)
     }
+
     resetImages([])
     closeModal()
-  } catch (error) {
-    alert('新增/編輯產品失敗')
+  } catch (error: unknown) {
+     if (error instanceof Error) {
+    alert(error.message)
+  } else {
+    alert('新增 / 編輯產品失敗')
+  }
   } finally {
     isLoading.value = false
     emit('get-products')
