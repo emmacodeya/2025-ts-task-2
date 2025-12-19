@@ -25,15 +25,11 @@ onUnmounted(() => {
 })
 
 const openModal = () => {
-  if (modal) {
-    modal.show()
-  }
+  modal?.show()
 }
 
 const closeModal = () => {
-  if (modal) {
-    modal.hide()
-  }
+  modal?.hide()
 }
 
 defineExpose({
@@ -62,33 +58,35 @@ defineExpose({
             aria-label="Close"
           ></button>
         </div>
+
         <div class="modal-body">
           <p>
-            <strong>訂單編號:</strong> <span id="modalOrderNumber">{{ props.order.id }}</span>
+            <strong>訂單編號：</strong>
+            {{ props.order.id }}
           </p>
           <p>
-            <strong>日期:</strong>
-            <span id="modalOrderDate">{{
-              new Date(props.order.create_at * 1000).toLocaleDateString()
-            }}</span>
+            <strong>日期：</strong>
+            {{ new Date(props.order.create_at * 1000).toLocaleDateString('zh-TW') }}
           </p>
           <p>
-            <strong>客戶名稱:</strong>
-            <span id="modalCustomerName">{{ props.order.user.name }}</span>
+            <strong>客戶名稱：</strong>
+            {{ props.order.user.name }}
           </p>
           <p>
-            <strong>地址:</strong>
-            <span id="modalShippingAddress">{{ props.order.user.address }}</span>
+            <strong>地址：</strong>
+            {{ props.order.user.address }}
           </p>
           <p>
-            <strong>Email:</strong>
-            <span id="modalCustomerEmail">{{ props.order.user.email }}</span>
+            <strong>Email：</strong>
+            {{ props.order.user.email }}
           </p>
           <p>
-            <strong>聯絡電話:</strong>
-            <span id="modalCustomerPhone">{{ props.order.user.tel }}</span>
+            <strong>聯絡電話：</strong>
+            {{ props.order.user.tel }}
           </p>
+
           <hr />
+
           <h6>訂購商品</h6>
           <table class="table table-bordered">
             <thead>
@@ -99,22 +97,29 @@ defineExpose({
               </tr>
             </thead>
             <tbody>
-              <tr v-for="productObj in props.order.products" :key="productObj.id">
+              <tr
+                v-for="productObj in props.order.products"
+                :key="productObj.id"
+              >
                 <td>{{ productObj.product.title }}</td>
                 <td>{{ productObj.qty }}</td>
-                <td>{{ productObj.final_total.toLocaleString('zh-TW') }}</td>
+                <td>
+                  NT${{ productObj.total.toLocaleString('zh-TW') }}
+                </td>
               </tr>
             </tbody>
           </table>
+
           <hr />
+
           <p class="h5 text-end">
-            <strong>總金額:</strong>
-            <span id="modalOrderAmount" class="text-danger">{{
-              props.order.total.toLocaleString('zh-TW')
-            }}</span>
-            元
+            <strong>總金額：</strong>
+            <span class="text-danger">
+              NT${{ props.order.total.toLocaleString('zh-TW') }}
+            </span>
           </p>
         </div>
+
         <div class="modal-footer">
           <button
             type="button"

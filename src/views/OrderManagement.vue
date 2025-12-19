@@ -25,7 +25,6 @@ const tempOrder = ref<Order>({
 })
 
 const currentPage = ref('1')
-
 const orders = ref<Order[]>([])
 
 const pagination = ref<Pagination>({
@@ -36,6 +35,7 @@ const pagination = ref<Pagination>({
   category: '',
 })
 
+// 取得訂單列表
 const getOrders = async () => {
   try {
     const res = await apiGetOrders({
@@ -44,19 +44,22 @@ const getOrders = async () => {
 
     orders.value = res.data.orders
     pagination.value = res.data.pagination
-  } catch (error) {
-    alert('取得訂單列表失敗')
-  }
+  } catch {
+  alert('取得訂單列表失敗')
 }
+}
+
 onMounted(() => {
   getOrders()
 })
 
+// 查看訂單
 const openModal = (order: Order) => {
   tempOrder.value = order
   orderDetailModalRef.value?.openModal()
 }
 
+// 刪除訂單
 const openDeleteModal = (orderId: string) => {
   deleteModalRef.value?.openModal(() => deleteOrder(orderId))
 }
@@ -64,7 +67,7 @@ const openDeleteModal = (orderId: string) => {
 const deleteOrder = async (orderId: string) => {
   try {
     await apiDeleteOrder(orderId)
-  } catch (error) {
+  } catch {
     alert('刪除訂單失敗')
   } finally {
     getOrders()
@@ -87,18 +90,24 @@ const deleteOrder = async (orderId: string) => {
               <th scope="col"></th>
             </tr>
           </thead>
+
           <tbody>
             <tr v-for="order in orders" :key="order.id">
-              <td>{{ new Date(order.create_at * 1000).toLocaleDateString('zh-TW') }}</td>
+              <td>
+                {{ new Date(order.create_at * 1000).toLocaleDateString('zh-TW') }}
+              </td>
               <td class="order-number">{{ order.id }}</td>
               <td>{{ Object.keys(order.products).length }}</td>
-              <td>{{ order.total }}</td>
+              <td>
+                NT${{ order.total.toLocaleString('zh-TW') }}
+              </td>
               <td>
                 <span
                   class="badge"
                   :class="{ 'bg-success': order.is_paid, 'bg-danger': !order.is_paid }"
-                  >{{ order.is_paid ? '已付款' : '未付款' }}</span
                 >
+                  {{ order.is_paid ? '已付款' : '未付款' }}
+                </span>
               </td>
               <td class="text-nowrap">
                 <button
@@ -121,41 +130,44 @@ const deleteOrder = async (orderId: string) => {
         </table>
       </div>
 
+      <!-- 分頁 -->
       <nav class="d-flex justify-content-center mt-4">
         <ul class="pagination">
           <li class="page-item">
             <button
               @click="currentPage = String(Number(currentPage) - 1)"
-              :disabled="!pagination?.has_pre"
+              :disabled="!pagination.has_pre"
               type="button"
               class="page-link"
-              :class="{ disabled: !pagination?.has_pre }"
-              aria-label="Previous"
             >
-              <span aria-hidden="true">&laquo;</span>
+              &laquo;
             </button>
           </li>
-          <li v-for="pageNum in pagination?.total_pages" class="page-item">
+
+          <li
+            v-for="pageNum in pagination.total_pages"
+            :key="pageNum"
+            class="page-item"
+          >
             <button
               @click="currentPage = pageNum.toString()"
               :disabled="currentPage === pageNum.toString()"
-              type="button"
               class="page-link"
               :class="{ active: currentPage === pageNum.toString() }"
+              type="button"
             >
               {{ pageNum }}
             </button>
           </li>
+
           <li class="page-item">
             <button
               @click="currentPage = String(Number(currentPage) + 1)"
-              :disabled="!pagination?.has_next"
-              class="page-link"
-              :class="{ disabled: !pagination?.has_next }"
+              :disabled="!pagination.has_next"
               type="button"
-              aria-label="Next"
+              class="page-link"
             >
-              <span aria-hidden="true">&raquo;</span>
+              &raquo;
             </button>
           </li>
         </ul>
@@ -163,8 +175,13 @@ const deleteOrder = async (orderId: string) => {
     </div>
   </div>
 
+  <!-- Modals -->
   <OrderDetailModal ref="orderDetailModalRef" :order="tempOrder" />
-  <DeleteModal ref="deleteModalRef" title="刪除訂單" content="確定要刪除該訂單嗎？" />
+  <DeleteModal
+    ref="deleteModalRef"
+    title="刪除訂單"
+    content="確定要刪除該訂單嗎？"
+  />
 </template>
 
 <style lang="scss" scoped></style>
